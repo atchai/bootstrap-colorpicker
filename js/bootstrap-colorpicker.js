@@ -1,5 +1,5 @@
 /* =========================================================
- * bootstrap-colorpicker.js 
+ * bootstrap-colorpicker.js
  * http://www.eyecon.ro/bootstrap-colorpicker
  * =========================================================
  * Copyright 2012 Stefan Petre
@@ -128,7 +128,7 @@
             };
         }
     };
-    
+
     var _guid = 0;
 
     // Picker object
@@ -151,6 +151,10 @@
                 'keyup.colorpicker': $.proxy(this.update, this)
             });
         } else if (this.component) {
+            (this.targetInput || this.element.find('input')).on({
+                'keyup': $.proxy(this.update, this)
+           });
+
             this.component.on({
                 'click.colorpicker': $.proxy(this.show, this)
             });
@@ -173,7 +177,7 @@
 
         this.base = this.picker.find('div:first')[0].style;
         this.update();
-        
+
         $($.proxy(function(){
             this.element.trigger('create', [this]);
         }, this));
@@ -203,16 +207,22 @@
         },
 
         update: function() {
-            var color = this.isInput ? this.element.prop('value') : this.element.data('color');
-            if (typeof color === "undefined" || color === null) {
-                color = '#ffffff';
-            }
-            this.color = new Color(color);
-            this.picker.find('i')
-                .eq(0).css({left: this.color.value.s * 100, top: 100 - this.color.value.b * 100}).end()
-                .eq(1).css('top', 100 * (1 - this.color.value.h)).end()
-                .eq(2).css('top', 100 * (1 - this.color.value.a));
-            this.previewColor();
+            var input = ( this.isInput && this.element ) || ( this.component && this.targetInput ) || ( this.component && this.element.find('input') ) || false;
+              var colorStr =
+                this.isInput ? input.prop('value') : (
+                  this.component && $.inArray( true, $.map( $.extend( {}, CPGlobal.stringParsers ), function(parser,idx) {
+                    return parser.re.exec( input.prop('value') ) && true || false;
+                  } ) ) >= 0 ? input.prop('value') : this.element.data('color')
+                );
+
+              if(colorStr != ""){
+                this.color = new Color(colorStr);
+                this.picker.find('i')
+                  .eq(0).css({left: this.color.value.s*100, top: 100 - this.color.value.b*100}).end()
+                  .eq(1).css('top', 100 * (1 - this.color.value.h)).end()
+                  .eq(2).css('top', 100 * (1 - this.color.value.a));
+                this.previewColor();
+              }
         },
 
         hide: function() {
@@ -245,7 +255,7 @@
                 left: offset.left
             });
         },
-                
+
        destroy: function(){
             $('.colorpicker[data-colorpicker-guid='+this.element.attr('data-colorpicker-guid')+']').remove();
             this.element.removeData('colorpicker').removeAttr('data-colorpicker-guid').off('.colorpicker');
